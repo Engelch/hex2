@@ -18,7 +18,7 @@ import (
 	cli "github.com/urfave/cli/v2"
 )
 
-const appVersion = "0.2.0"
+const appVersion = "0.2.1"
 const appName = "hex2"
 
 // These CLI options are used more than once below. So let's use constants that we do not get
@@ -52,12 +52,14 @@ func processBase64Conversion(infile []byte) error {
 }
 
 func processRawConversion(infile []byte) error {
-	n, err := os.Stdout.Write(infile) // flushing should be done implicitly by terminating the app
-	if n != len(infile) {             // should not happen for such small files
-		fmt.Fprint(os.Stderr, "Error writing raw data to stdout")
-	}
-	if err != nil { // should also never happen
-		return errors.New(ce.CurrentFunctionName() + ":" + err.Error())
+	nsum := 0
+	var n int
+	var err error
+	for ; nsum < len(infile); nsum += n {
+		n, err = os.Stdout.Write(infile[nsum:]) // flushing should be done implicitly by terminating the app
+		if err != nil {                         // should also never happen
+			return errors.New(ce.CurrentFunctionName() + ":" + err.Error())
+		}
 	}
 	return nil
 }
