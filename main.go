@@ -18,7 +18,7 @@ import (
 	cli "github.com/urfave/cli/v2"
 )
 
-const appVersion = "0.2.1"
+const appVersion = "0.3.0"
 const appName = "hex2"
 
 // These CLI options are used more than once below. So let's use constants that we do not get
@@ -111,16 +111,21 @@ func main() {
 	app.Flags = commandLineOptions()
 	app.Name = appName
 	app.Version = appVersion
-	app.Usage = "Convert hex into base64 or raw aka binary format.\n" +
-		"\n                  hex2 [-d] -r <<file>> # creates raw format sent to stdout" +
-		"\n                  hex2 [-d] -6 <<file>> # creates base64 sent to stdout"
+	app.Usage = "Convert hex into base64 or raw aka binary format.\n\tIt reads from stdin if no file is specified.\n" +
+		"\n                  hex2 [-d] -r [<<file>>...] # creates raw format sent to stdout" +
+		"\n                  hex2 [-d] -6 [<<file>>...] # creates base64 sent to stdout"
 
 	app.Action = func(c *cli.Context) error {
 		err := checkOptions(c)
 		ce.ExitIfError(err, 9, "checkOptions")
-		for index, _ := range make([]int, c.NArg()) {
-			err = hex2(c, c.Args().Get(index))
-			ce.ExitIfError(err, 1, "Error for file "+c.Args().Get(index))
+		if c.NArg() == 0 {
+			err = hex2(c, "/dev/stdin")
+			ce.ExitIfError(err, 1, "Error for /dev/stdin")
+		} else {
+			for index, _ := range make([]int, c.NArg()) {
+				err = hex2(c, c.Args().Get(index))
+				ce.ExitIfError(err, 1, "Error for file "+c.Args().Get(index))
+			}
 		}
 		return nil
 	}
